@@ -34,4 +34,4 @@ async def obtener_versiones_tealium(profile: str) -> dict:
 
 
 if __name__ == "__main__":
-    mcp.run()
+    mcp.run(transport="stdio")
