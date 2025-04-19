@@ -80,3 +80,34 @@ async def obtener_versiones(api_key, username, account, profile, retries=0):
             print(f"Error al obtener la lista de versiones: {e}")
             return []
 
+async def obtener_lista_load_rules(api_key, username, account, profile, retries=0):
+    """
+    A partir de un perfil de Tealium, obtiene el listado de load rules, donde se incluye infomración de las condiciones, quien las esta utilizando, etc.
+    """
+    jwt, url_base = obtener_access_token(profile)
+
+    if not jwt or not url_base:
+        await obtener_jwt_y_url_base_tealium(api_key, username, account, profile)
+        jwt, url_base = obtener_access_token(profile)
+
+    url = f"https://{url_base}/v3/tiq/accounts/{account}/profiles/{profile}?includes=loadRules"
+    headers = {"Authorization": f"Bearer {jwt}"}
+
+    async with httpx.AsyncClient() as client:
+        try:
+            response = await client.get(url, headers=headers)
+            response.raise_for_status()
+            return response.json()
+        except httpx.RequestError as e:
+            try:
+                error_response = response.json()
+                print(f"Error al obtener load rules del perfil {profile}: {error_response}")
+            except json.JSONDecodeError:
+                print(f"Error al obtener el detalle de la revisión: {e}")
+            if response.status_code == 401:  # Unauthorized
+                print("Token expirado, obteniendo un nuevo token...")
+                if retries < max_retries:
+                    await asyncio.sleep(1)
+                    return await obtener_lista_load_rules(api_key, username, account, profile, retries + 1)
+            print(f"Error al obtener la lista de load rules: {e}") 
+            return []

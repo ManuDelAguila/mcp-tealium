@@ -2,7 +2,7 @@ import httpx
 import os
 from mcp.server.fastmcp import FastMCP
 
-from tealium_calls import obtener_versiones
+from tealium_calls import obtener_versiones, obtener_lista_load_rules
 
 # Create an MCP server
 mcp = FastMCP("Tealim MCP")
@@ -29,6 +29,15 @@ async def obtener_versiones_tealium(profile: str) -> dict:
     try:
         versiones = await obtener_versiones(API_KEY, user_email, tealium_account, profile)
         return versiones
+    except Exception as e:
+        return {"error": str(e)}
+
+@mcp.tool()
+async def obtener_lista_load_rules_tealium(profile: str) -> dict:
+    """A partir de un perfil de Tealium, obtiene el listado de load rules, donde se incluye infomración de las condiciones, quien las esta utilizando, etc."""
+    try:
+        load_rules = await obtener_lista_load_rules(API_KEY, user_email, tealium_account, profile)
+        return load_rules
     except Exception as e:
         return {"error": str(e)}
 
