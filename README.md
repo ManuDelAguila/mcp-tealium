@@ -48,7 +48,7 @@ Substituir las variables:
             "Tealim MCP": {
                 "command": "<<RUTA_PROYECTO>>/venv/Scripts/python",
                 "args": [
-                    "<<RUTA_PROYECTO>>/server.py",
+                    "<<RUTA_PROYECTO>>/server.py"
                 ],
                 "env": {
                     "API_KEY_FILE": "<<RUTA_API_KEY_TEALIUM>>",
