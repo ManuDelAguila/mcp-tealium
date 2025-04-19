@@ -80,5 +80,3 @@ async def obtener_versiones(api_key, username, account, profile, retries=0):
             print(f"Error al obtener la lista de versiones: {e}")
             return []
 
-
-#print(obtener_versiones("kHEUzeVz^p~nsXsh,MDjE$+m[eeDNPvbR6Cxntm#*:zlq9Y0kL}eUTx6Rtuij7uz", "jose.manuel.del.aguila.bejarano@emeal.nttdata.com", "everis-training", "manu"))
