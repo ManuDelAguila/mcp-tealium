@@ -1,4 +1,3 @@
-import httpx
 import os
 import json
 import logging
@@ -34,7 +33,19 @@ if not tealium_account:
 
 @mcp.tool()
 async def obtener_versiones_tealium(profile: str) -> dict:
-    """Obtiene del pefil indicado en Tealium el listado de versiones."""
+    """
+    Obtiene del perfil indicado en Tealium el listado de versiones.
+
+    Args:
+        profile (str): Nombre del perfil de Tealium.
+
+    Returns:
+        dict: Un diccionario con el listado de versiones o un mensaje de error.
+    """
+    if not profile:
+        logger.error("El parámetro 'profile' no está informado.")
+        return {"error": "El parámetro 'profile' es obligatorio."}
+
     try:
         versiones = await obtener_versiones(API_KEY, user_email, tealium_account, profile)
         return versiones
@@ -44,7 +55,19 @@ async def obtener_versiones_tealium(profile: str) -> dict:
 
 @mcp.tool()
 async def obtener_lista_load_rules_tealium(profile: str) -> dict:
-    """A partir de un perfil de Tealium, obtiene el listado de load rules, donde se incluye infomraci\u00f3n de las condiciones, quien las esta utilizando, etc."""
+    """
+    A partir de un perfil de Tealium, obtiene el listado de load rules, donde se incluye información de las condiciones y quién las está utilizando.
+
+    Args:
+        profile (str): Nombre del perfil de Tealium.
+
+    Returns:
+        dict: Un diccionario con el listado de load rules o un mensaje de error.
+    """
+    if not profile:
+        logger.error("El parámetro 'profile' no está informado.")
+        return {"error": "El parámetro 'profile' es obligatorio."}
+
     try:
         load_rules = await obtener_lista_load_rules(API_KEY, user_email, tealium_account, profile)
         return load_rules
@@ -59,12 +82,33 @@ async def actualizar_load_rule_tealium(profile: str, notes: str, load_rule_id: s
 
     Args:
         profile (str): Nombre del perfil de Tealium.
-        notes (str): Comentario de que se esta actualizando en la load rule.
-        load_rule_id (int): ID de la load rule a actualizar.
+        notes (str): Comentario de lo que se está actualizando en la load rule.
+        load_rule_id (str): ID de la load rule a actualizar.
         load_rule_name (str): Nombre de la load rule.
         load_rule_state (str): Estado de la load rule (active/inactive).
-        load_rule_conditions (list): Json con el listado completeo de las condiciones. Ejemplo "[[{\"operator\": \"defined\",\"value\": \"\",\"variable\": \"udo.page_name\"},{\"operator\": \"regular_expression\",\"does_not_equal\": \"home\",\"variable\": \"udo.page_name\"}]]" 
+        load_rule_conditions (list): Lista de condiciones en formato JSON.
+
+    Returns:
+        dict: Un diccionario con el resultado de la operación o un mensaje de error.
     """
+    missing_params = []
+    if not profile:
+        missing_params.append("profile")
+    if not notes:
+        missing_params.append("notes")
+    if not load_rule_id:
+        missing_params.append("load_rule_id")
+    if not load_rule_name:
+        missing_params.append("load_rule_name")
+    if not load_rule_state:
+        missing_params.append("load_rule_state")
+    if not load_rule_conditions:
+        missing_params.append("load_rule_conditions")
+
+    if missing_params:
+        logger.error(f"Faltan parámetros obligatorios: {', '.join(missing_params)}")
+        return {"error": "Faltan parámetros obligatorios.", "missing_params": missing_params}
+
     try:
        return await actualizar_load_rule(API_KEY, user_email, tealium_account, profile, notes, load_rule_id, load_rule_name, load_rule_state, json.dumps(load_rule_conditions))
     except Exception as e:
