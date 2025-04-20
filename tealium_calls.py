@@ -11,7 +11,7 @@ logger = logging.getLogger("TealiumCalls")
 
 max_retries = 1
 
-access_tokens = {}  # {user_id: {'token': '...', 'expiry': timestamp}}
+access_tokens = {} 
 TOKEN_DURATION = 30 * 60  # 30 minutos en segundos
 
 def guardar_access_token(profile, token, url_base):
