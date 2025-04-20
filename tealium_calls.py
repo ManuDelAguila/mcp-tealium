@@ -111,3 +111,51 @@ async def obtener_lista_load_rules(api_key, username, account, profile, retries=
                     return await obtener_lista_load_rules(api_key, username, account, profile, retries + 1)
             print(f"Error al obtener la lista de load rules: {e}") 
             return []
+
+async def actualizar_load_rule(api_key, username, account, profile, notes, load_rule_id, load_rule_name, load_rule_state, load_rule_conditions, retries=0):
+    """
+    Actualiza un load rule en Tealium.
+    """
+    jwt, url_base = obtener_access_token(profile)
+
+    if not jwt or not url_base:
+        await obtener_jwt_y_url_base_tealium(api_key, username, account, profile)
+        jwt, url_base = obtener_access_token(profile)
+
+    url = f"https://{url_base}/v3/tiq/accounts/{account}/profiles/{profile}?tps=4"
+    headers = {"Authorization": f"Bearer {jwt}"}
+
+    json_load_rule = {
+        "saveType": "save",
+        "notes": f"{notes}",
+        "operationList": [
+            {
+                "op": "replace",
+                "path": f"/loadRules/{load_rule_id}",
+                "value": {
+                    "object": "loadRule",
+                    "name": f"{load_rule_name}",
+                    "status": f"{load_rule_state}",
+                    "conditions": load_rule_conditions
+                }
+            }
+        ]
+    }
+    async with httpx.AsyncClient() as client:
+        try:
+            response = await client.patch(url, headers=headers, data=json.dumps(json_load_rule))
+            response.raise_for_status()
+            return response.json()
+        except httpx.RequestError as e:
+            try:
+                error_response = response.json()
+                print(f"Error al obtener load rules del perfil {profile}: {error_response}")
+            except json.JSONDecodeError:
+                print(f"Error al obtener el detalle de la revisión: {e}")
+            if response.status_code == 401:  # Unauthorized
+                print("Token expirado, obteniendo un nuevo token...")
+                if retries < max_retries:
+                    await asyncio.sleep(1)
+                    return await actualizar_load_rule(api_key, username, account, profile, notes, load_rule_id, load_rule_name, load_rule_state, load_rule_conditions, retries + 1)
+            print(f"Error al obtener la lista de load rules: {e}") 
+            return []

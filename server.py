@@ -1,8 +1,9 @@
 import httpx
 import os
+import json
 from mcp.server.fastmcp import FastMCP
 
-from tealium_calls import obtener_versiones, obtener_lista_load_rules
+from tealium_calls import obtener_versiones, obtener_lista_load_rules, actualizar_load_rule
 
 # Create an MCP server
 mcp = FastMCP("Tealim MCP")
@@ -40,7 +41,26 @@ async def obtener_lista_load_rules_tealium(profile: str) -> dict:
         return load_rules
     except Exception as e:
         return {"error": str(e)}
+    
+@mcp.tool()
+async def actualizar_load_rule_tealium(profile: str, notes: str, load_rule_id: str, load_rule_name: str, load_rule_state: str, load_rule_conditions: list) -> dict:
+    """
+    Actualiza una load rule de Tealium.
+
+    Args:
+        profile (str): Nombre del perfil de Tealium.
+        notes (str): Comentario de que se esta actualizando en la load rule.
+        load_rule_id (int): ID de la load rule a actualizar.
+        load_rule_name (str): Nombre de la load rule.
+        load_rule_state (str): Estado de la load rule (active/inactive).
+        load_rule_conditions (list): Json con el listado completeo de las condiciones. Ejemplo "[[{\"operator\": \"defined\",\"value\": \"\",\"variable\": \"udo.page_name\"},{\"operator\": \"regular_expression\",\"does_not_equal\": \"home\",\"variable\": \"udo.page_name\"}]]" 
+    """
+    try:
+       return await actualizar_load_rule(API_KEY, user_email, tealium_account, profile, notes, load_rule_id, load_rule_name, load_rule_state, json.dumps(load_rule_conditions))
+    except Exception as e:
+        return {"error": str(e)}
 
 
 if __name__ == "__main__":
     mcp.run(transport="stdio")
+
