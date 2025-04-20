@@ -3,6 +3,11 @@ import httpx
 import asyncio
 import time
 import threading
+import logging
+
+# Configure logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger("TealiumCalls")
 
 max_retries = 1
 
@@ -12,7 +17,6 @@ TOKEN_DURATION = 30 * 60  # 30 minutos en segundos
 def guardar_access_token(profile, token, url_base):
     expiry_time = time.time() + TOKEN_DURATION
     access_tokens[profile] = {'token': token, 'url_base': url_base,'expiry': expiry_time}
-    # Opcional: Programar la eliminación del token después de la expiración
     threading.Timer(TOKEN_DURATION, eliminar_access_token, args=[profile]).start()
 
 def obtener_access_token(profile):
@@ -45,7 +49,7 @@ async def obtener_jwt_y_url_base_tealium(api_key, username, account, profile):
             url_base = response_json["host"]
             guardar_access_token(profile, token, url_base)
         except httpx.RequestError as e:
-            print(f"Error al obtener el JWT y la URL base: {e}")
+            logger.exception("Error al obtener el JWT y la URL base")
             return None, None
 
 async def obtener_versiones(api_key, username, account, profile, retries=0):
@@ -67,22 +71,16 @@ async def obtener_versiones(api_key, username, account, profile, retries=0):
             response.raise_for_status()
             return response.json()
         except httpx.RequestError as e:
-            try:
-                error_response = response.json()
-                print(f"Error al obtener versiones del perfil {profile}: {error_response}")
-            except json.JSONDecodeError:
-                print(f"Error al obtener el detalle de la revisión: {e}")
-            if response.status_code == 401:  # Unauthorized
-                print("Token expirado, obteniendo un nuevo token...")
-                if retries < max_retries:
-                    await asyncio.sleep(1)
-                    return await obtener_versiones(api_key, username, account, profile, retries + 1)
-            print(f"Error al obtener la lista de versiones: {e}")
+            logger.exception("Error al obtener la lista de versiones")
+            if response.status_code == 401 and retries < max_retries:  # Unauthorized
+                logger.info("Token expirado, obteniendo un nuevo token...")
+                await asyncio.sleep(1)
+                return await obtener_versiones(api_key, username, account, profile, retries + 1)
             return []
 
 async def obtener_lista_load_rules(api_key, username, account, profile, retries=0):
     """
-    A partir de un perfil de Tealium, obtiene el listado de load rules, donde se incluye infomración de las condiciones, quien las esta utilizando, etc.
+    A partir de un perfil de Tealium, obtiene el listado de load rules, donde se incluye infomraci\u00f3n de las condiciones, quien las esta utilizando, etc.
     """
     jwt, url_base = obtener_access_token(profile)
 
@@ -99,17 +97,11 @@ async def obtener_lista_load_rules(api_key, username, account, profile, retries=
             response.raise_for_status()
             return response.json()
         except httpx.RequestError as e:
-            try:
-                error_response = response.json()
-                print(f"Error al obtener load rules del perfil {profile}: {error_response}")
-            except json.JSONDecodeError:
-                print(f"Error al obtener el detalle de la revisión: {e}")
-            if response.status_code == 401:  # Unauthorized
-                print("Token expirado, obteniendo un nuevo token...")
-                if retries < max_retries:
-                    await asyncio.sleep(1)
-                    return await obtener_lista_load_rules(api_key, username, account, profile, retries + 1)
-            print(f"Error al obtener la lista de load rules: {e}") 
+            logger.exception("Error al obtener la lista de load rules")
+            if response.status_code == 401 and retries < max_retries:  # Unauthorized
+                logger.info("Token expirado, obteniendo un nuevo token...")
+                await asyncio.sleep(1)
+                return await obtener_lista_load_rules(api_key, username, account, profile, retries + 1)
             return []
 
 async def actualizar_load_rule(api_key, username, account, profile, notes, load_rule_id, load_rule_name, load_rule_state, load_rule_conditions, retries=0):
@@ -147,15 +139,9 @@ async def actualizar_load_rule(api_key, username, account, profile, notes, load_
             response.raise_for_status()
             return response.json()
         except httpx.RequestError as e:
-            try:
-                error_response = response.json()
-                print(f"Error al obtener load rules del perfil {profile}: {error_response}")
-            except json.JSONDecodeError:
-                print(f"Error al obtener el detalle de la revisión: {e}")
-            if response.status_code == 401:  # Unauthorized
-                print("Token expirado, obteniendo un nuevo token...")
-                if retries < max_retries:
-                    await asyncio.sleep(1)
-                    return await actualizar_load_rule(api_key, username, account, profile, notes, load_rule_id, load_rule_name, load_rule_state, load_rule_conditions, retries + 1)
-            print(f"Error al obtener la lista de load rules: {e}") 
+            logger.exception("Error al actualizar el load rule")
+            if response.status_code == 401 and retries < max_retries:  # Unauthorized
+                logger.info("Token expirado, obteniendo un nuevo token...")
+                await asyncio.sleep(1)
+                return await actualizar_load_rule(api_key, username, account, profile, notes, load_rule_id, load_rule_name, load_rule_state, load_rule_conditions, retries + 1)
             return []
