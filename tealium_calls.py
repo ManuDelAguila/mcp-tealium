@@ -79,6 +79,32 @@ async def obtener_versiones(api_key, username, account, profile, retries=0):
                 return await obtener_versiones(api_key, username, account, profile, retries + 1)
             return []
 
+async def obtener_detalles_version(api_key, username, account, profile, versionId, retries=0):
+    """
+    Obtiene el detalle de una version de un perfil de Tealium (API v3).
+    """
+    jwt, url_base = obtener_access_token(profile)
+
+    if not jwt or not url_base:
+        await obtener_jwt_y_url_base_tealium(api_key, username, account, profile)
+        jwt, url_base = obtener_access_token(profile)
+
+    url = f"https://{url_base}/v3/tiq/accounts/{account}/profiles/{profile}?publishVersion={versionId}"
+    headers = {"Authorization": f"Bearer {jwt}"}
+
+    async with httpx.AsyncClient(verify=False) as client:
+        try:
+            response = await client.get(url, headers=headers)
+            response.raise_for_status()
+            return response.json()
+        except httpx.RequestError as e:
+            logger.exception("Error al obtener la lista de versiones")
+            if response.status_code == 401 and retries < max_retries:  # Unauthorized
+                logger.info("Token expirado, obteniendo un nuevo token...")
+                await asyncio.sleep(1)
+                return await obtener_detalles_version(api_key, username, account, profile, versionId, retries + 1)
+            return []
+
 async def obtener_lista_load_rules(api_key, username, account, profile, retries=0):
     """
     A partir de un perfil de Tealium, obtiene el listado de load rules, donde se incluye infomraci\u00f3n de las condiciones, quien las esta utilizando, etc.

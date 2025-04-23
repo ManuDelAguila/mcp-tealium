@@ -3,7 +3,7 @@ import json
 import logging
 from mcp.server.fastmcp import FastMCP
 
-from tealium_calls import obtener_versiones, obtener_lista_load_rules, actualizar_load_rule
+from tealium_calls import obtener_versiones, obtener_lista_load_rules, actualizar_load_rule, obtener_detalles_version
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -48,6 +48,29 @@ async def obtener_versiones_tealium(profile: str) -> dict:
 
     try:
         versiones = await obtener_versiones(API_KEY, user_email, tealium_account, profile)
+        return versiones
+    except Exception as e:
+        logger.exception("Error al obtener el detalle de la version de Tealium")
+        return {"error": str(e)}
+
+@mcp.tool()
+async def obtener_detalles_version_tealium(profile: str, versionId: str) -> dict:
+    """
+    Obtiene del perfil indicado de Tealium información detallada de la versión indicada.
+
+    Args:
+        profile (str): Nombre del perfil de Tealium.
+        versionId (str): ID de la versión.
+
+    Returns:
+        dict: Un diccionario con el detalle de la version indicada o un mensaje de error.
+    """
+    if not profile:
+        logger.error("El parámetro 'profile' no está informado.")
+        return {"error": "El parámetro 'profile' es obligatorio."}
+
+    try:
+        versiones = await obtener_detalles_version(API_KEY, user_email, tealium_account, profile, versionId)
         return versiones
     except Exception as e:
         logger.exception("Error al obtener versiones de Tealium")
