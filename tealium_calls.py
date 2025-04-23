@@ -40,16 +40,17 @@ async def obtener_jwt_y_url_base_tealium(api_key, username, account, profile):
         "key": api_key
     }
 
-    async with httpx.AsyncClient() as client:
+    async with httpx.AsyncClient(verify=False) as client:  # Deshabilitar verificación SSL
         try:
             response = await client.post(url, headers=headers, data=data)
             response.raise_for_status()
             response_json = response.json()
             token = response_json["token"]
             url_base = response_json["host"]
+            print(f"Token obtenido: {token}, url_base: {url_base}")
             guardar_access_token(profile, token, url_base)
         except httpx.RequestError as e:
-            logger.exception("Error al obtener el JWT y la URL base")
+            logger.exception(f"Error al obtener el JWT y la URL base: {e}")
             return None, None
 
 async def obtener_versiones(api_key, username, account, profile, retries=0):
@@ -65,7 +66,7 @@ async def obtener_versiones(api_key, username, account, profile, retries=0):
     url = f"https://{url_base}/v3/tiq/accounts/{account}/profiles/{profile}?includes=versionIds"
     headers = {"Authorization": f"Bearer {jwt}"}
 
-    async with httpx.AsyncClient() as client:
+    async with httpx.AsyncClient(verify=False) as client:
         try:
             response = await client.get(url, headers=headers)
             response.raise_for_status()
@@ -91,7 +92,7 @@ async def obtener_lista_load_rules(api_key, username, account, profile, retries=
     url = f"https://{url_base}/v3/tiq/accounts/{account}/profiles/{profile}?includes=loadRules"
     headers = {"Authorization": f"Bearer {jwt}"}
 
-    async with httpx.AsyncClient() as client:
+    async with httpx.AsyncClient(verify=False) as client:
         try:
             response = await client.get(url, headers=headers)
             response.raise_for_status()
@@ -116,7 +117,8 @@ async def actualizar_load_rule(api_key, username, account, profile, notes, load_
 
     url = f"https://{url_base}/v3/tiq/accounts/{account}/profiles/{profile}?tps=4"
     headers = {"Authorization": f"Bearer {jwt}"}
-
+    if isinstance(load_rule_conditions, list) and all(isinstance(condition, dict) for condition in load_rule_conditions):
+        load_rule_conditions = [load_rule_conditions]
     json_load_rule = {
         "saveType": "save",
         "notes": f"{notes}",
@@ -133,7 +135,7 @@ async def actualizar_load_rule(api_key, username, account, profile, notes, load_
             }
         ]
     }
-    async with httpx.AsyncClient() as client:
+    async with httpx.AsyncClient(verify=False) as client:
         try:
             response = await client.patch(url, headers=headers, data=json.dumps(json_load_rule))
             response.raise_for_status()

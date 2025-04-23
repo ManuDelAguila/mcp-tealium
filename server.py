@@ -110,7 +110,7 @@ async def actualizar_load_rule_tealium(profile: str, notes: str, load_rule_id: s
         return {"error": "Faltan parámetros obligatorios.", "missing_params": missing_params}
 
     try:
-       return await actualizar_load_rule(API_KEY, user_email, tealium_account, profile, notes, load_rule_id, load_rule_name, load_rule_state, json.dumps(load_rule_conditions))
+       return await actualizar_load_rule(API_KEY, user_email, tealium_account, profile, notes, load_rule_id, load_rule_name, load_rule_state, load_rule_conditions)
     except Exception as e:
         logger.exception("Error al actualizar load rule de Tealium")
         return {"error": str(e)}
